@@ -1,0 +1,18 @@
+subprojects {
+    apply plugin: 'java'
+    group = 'com.kalita_ivan.chat'
+    version = '1.0'
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        testCompile "junit:junit:4.12"
+    }
+}
+
+project(':chat_server_gui') {
+    dependencies {
+        compile project(':chat_library')
+        compile project(':chat_server')
+    }
+}

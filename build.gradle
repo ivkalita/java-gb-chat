@@ -16,3 +16,9 @@ project(':chat_server_gui') {
         compile project(':chat_server')
     }
 }
+
+project(':chat_client') {
+    dependencies {
+        compile project(':chat_library')
+    }
+}

@@ -1,9 +1,9 @@
-package main.java.com.kalita_ivan.chat.server.gui;
+package com.kalita_ivan.chat.server.gui;
 
-import main.java.com.kalita_ivan.chat.library.DefaultGUIWindow;
-import main.java.com.kalita_ivan.chat.library.TextAreaTimeLogger;
-import main.java.com.kalita_ivan.chat.server.core.ChatServer;
-import main.java.com.kalita_ivan.chat.server.core.ChatServerListener;
+import com.kalita_ivan.chat.library.DefaultGUIWindow;
+import com.kalita_ivan.chat.library.TextAreaTimeLogger;
+import com.kalita_ivan.chat.server.core.ChatServer;
+import com.kalita_ivan.chat.server.core.ChatServerListener;
 
 import javax.swing.*;
 import java.awt.*;

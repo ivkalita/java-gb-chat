@@ -1,4 +1,4 @@
-package main.java.com.kalita_ivan.chat.server.core;
+package com.kalita_ivan.chat.server.core;
 
 public class ChatServer {
 

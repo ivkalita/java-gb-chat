@@ -1,4 +1,4 @@
-package main.java.com.kalita_ivan.chat.library;
+package com.kalita_ivan.chat.library;
 
 import javax.swing.*;
 import java.text.DateFormat;

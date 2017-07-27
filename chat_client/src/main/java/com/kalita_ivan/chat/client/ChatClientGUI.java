@@ -1,7 +1,8 @@
-package main.java.com.kalita_ivan.chat.client;
+package com.kalita_ivan.chat.client;
 
-import main.java.com.kalita_ivan.chat.library.DefaultGUIWindow;
-import main.java.com.kalita_ivan.chat.library.TextAreaTimeLogger;
+import io.reactivex.Flowable;
+import com.kalita_ivan.chat.library.DefaultGUIWindow;
+import com.kalita_ivan.chat.library.TextAreaTimeLogger;
 
 import javax.swing.*;
 import java.awt.*;
@@ -90,6 +91,7 @@ public class ChatClientGUI extends DefaultGUIWindow {
         btnDisconnect.addActionListener(this::btnDisconnectActionListener);
         btnLogin.addActionListener(this::btnLoginActionListener);
         btnSend.addActionListener(this::btnSendActionListener);
+//        Flowable.just("Hello world").subscribe(textAreaTimeLogger::onLog);
     }
 
     private void btnDisconnectActionListener(ActionEvent e) {

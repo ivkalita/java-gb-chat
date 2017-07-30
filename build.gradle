@@ -18,9 +18,14 @@ project(':chat_server_gui') {
     }
 }
 
+project(':chat_library') {
+    dependencies {
+        compile "io.reactivex:rxswing:0.24.0"
+    }
+}
+
 project(':chat_client') {
     dependencies {
-        compile "io.reactivex.rxjava2:rxjava:2.1.2"
         compile project(':chat_library')
     }
 }

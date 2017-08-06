@@ -27,5 +27,19 @@ project(':chat_library') {
 project(':chat_client') {
     dependencies {
         compile project(':chat_library')
+        compile project(':network')
+    }
+}
+
+project(':chat_server') {
+    dependencies {
+        compile project(':network')
+    }
+}
+
+project(':network') {
+    dependencies {
+        compile "io.reactivex:rxjava:1.0.10"
+        compile "com.owlike:genson:1.4"
     }
 }

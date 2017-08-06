@@ -1,15 +1,19 @@
 package com.kalita_ivan.chat.client;
 
-import rx.subjects.BehaviorSubject;
-import rx.subjects.PublishSubject;
-
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import rx.subjects.BehaviorSubject;
+import rx.subjects.PublishSubject;
+
 class ChatClientViewModel {
+    static private final String DEFAULT_IP = "127.0.0.1";
+    static private final String DEFAULT_PORT = "8000";
+    static private final String DEFAULT_LOGIN = "login";
+    static private final String DEFAULT_PASSWORD = "password";
+
     BehaviorSubject<String> ip = BehaviorSubject.create();
     BehaviorSubject<String> port = BehaviorSubject.create();
     BehaviorSubject<String> login = BehaviorSubject.create();
@@ -22,35 +26,27 @@ class ChatClientViewModel {
     BehaviorSubject<ActionEvent> buttonDisconnect = BehaviorSubject.create();
     BehaviorSubject<ActionEvent> buttonSend = BehaviorSubject.create();
     PublishSubject<String> messages = PublishSubject.create();
-    BehaviorSubject<Boolean> connected = BehaviorSubject.create(false);
 
+    private boolean connected;
     private Messenger messenger;
     private DateFormat dateFormat;
 
     ChatClientViewModel(Messenger messenger) {
-        this.dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+        this.dateFormat = new SimpleDateFormat("HH:mm:ss");
         this.messenger = messenger;
+        this.connected = false;
 
-        this.messenger
-            .messageDelivered
-            .subscribe(message -> log(String.format("Message \"%s\" delivered.", message.getContent())));
+        buttonLogin.subscribe(actionEvent -> this.messenger.connect(
+            this.ip.getValue(),
+            this.port.getValue(),
+            this.login.getValue(),
+            this.password.getValue()
+        ));
 
-        buttonLogin.subscribe(actionEvent -> {
-            connected.onNext(true);
-            panelTopVisible.onNext(false);
-            panelBottomVisible.onNext(true);
-            log("User logged in.");
-        });
-
-        buttonDisconnect.subscribe(actionEvent -> {
-            connected.onNext(false);
-            panelTopVisible.onNext(true);
-            panelBottomVisible.onNext(false);
-            log("User logged out.");
-        });
+        buttonDisconnect.subscribe(actionEvent -> this.messenger.disconnect());
 
         buttonSend.subscribe(actionEvent -> {
-            if (!connected.getValue()) {
+            if (!this.connected) {
                 return;
             }
             String messageContent = this.message.getValue().trim();
@@ -58,13 +54,37 @@ class ChatClientViewModel {
                 return;
             }
 
-            Message message = messenger.send(this.message.getValue());
+            this.messenger.send(messageContent);
             this.message.onNext("");
-            log(String.format("Message \"%s\" sent.", message.getContent()));
         });
+
+        this.messenger.connected.subscribe((none) -> {
+            this.connected = true;
+            this.panelTopVisible.onNext(false);
+            this.panelBottomVisible.onNext(true);
+            log("ChatClient: connected.");
+        });
+
+        this.messenger.disconnected.subscribe((none) -> {
+            this.connected = false;
+            this.panelTopVisible.onNext(true);
+            this.panelBottomVisible.onNext(false);
+            log("ChatClient: disconnected.");
+        });
+
+        this.messenger.newMessage.subscribe(this::log);
+
+        this.messenger.failed.subscribe((e) -> log(String.format("Messenger: exception: %s", e.getMessage())));
+    }
+
+    void init() {
+        this.ip.onNext(DEFAULT_IP);
+        this.port.onNext(DEFAULT_PORT);
+        this.login.onNext(DEFAULT_LOGIN);
+        this.password.onNext(DEFAULT_PASSWORD);
     }
 
     private void log(String message) {
-        messages.onNext(String.format("%s: %s\n", dateFormat.format(new Date()), message));
+        this.messages.onNext(String.format("%s: %s\n", dateFormat.format(new Date()), message));
     }
 }

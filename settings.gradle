@@ -1,1 +1,1 @@
-include 'chat_server_gui', 'chat_library', 'chat_server', 'chat_client'
+include 'chat_server_gui', 'chat_library', 'chat_server', 'chat_client', 'network'

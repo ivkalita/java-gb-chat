@@ -1,6 +1,5 @@
 package com.kalita_ivan.chat.client;
 
-import rx.Observable;
 import rx.observables.SwingObservable;
 import rx.schedulers.SwingScheduler;
 
@@ -15,11 +14,6 @@ import static com.kalita_ivan.chat.library.mvvm.ViewModel2ViewBindings.bindViewM
 
 class ChatClientView extends JFrame  {
     private ChatClientViewModel viewModel;
-
-    static private final String DEFAULT_IP = "127.0.0.1";
-    static private final String DEFAULT_PORT = "8000";
-    static private final String DEFAULT_LOGIN = "login";
-    static private final String DEFAULT_PASSWORD = "password";
 
     private JPanel panelTop;
     private JPanel panelBottom;
@@ -45,11 +39,11 @@ class ChatClientView extends JFrame  {
         setLocationRelativeTo(null);
 
         panelTop = new JPanel(new GridLayout(2, 3));
-        fieldIP = new JTextField(DEFAULT_IP);
-        fieldPort = new JTextField(DEFAULT_PORT);
+        fieldIP = new JTextField();
+        fieldPort = new JTextField();
         checkAlwaysOnTop = new JCheckBox("Always on top");
-        fieldLogin = new JTextField(DEFAULT_LOGIN);
-        fieldPassword = new JPasswordField(DEFAULT_PASSWORD);
+        fieldLogin = new JTextField();
+        fieldPassword = new JPasswordField();
         buttonLogin = new JButton("Login");
 
         textAreaMessages = new JTextArea();
@@ -100,10 +94,15 @@ class ChatClientView extends JFrame  {
             .subscribe(e -> viewModel.buttonSend.onNext(
                 new ActionEvent(buttonSend, ActionEvent.ACTION_FIRST, null))
             );
+        bindViewModelString(viewModel.ip).toSwingViewText(fieldIP);
+        bindViewModelString(viewModel.port).toSwingViewText(fieldPort);
+        bindViewModelString(viewModel.login).toSwingViewText(fieldLogin);
+        bindViewModelString(viewModel.password).toSwingViewText(fieldPassword);
         bindViewModelString(viewModel.message).toSwingViewText(fieldMessage);
         bindViewModelBoolean(viewModel.panelTopVisible).toSwingViewVisiblePropertyOf(panelTop);
         bindViewModelBoolean(viewModel.panelBottomVisible).toSwingViewVisiblePropertyOf(panelBottom);
         bindViewModelBoolean(viewModel.alwaysOnTop).toSwingViewAlwaysOnTopPropertyOf(this);
         bindViewModelString(viewModel.messages).toSwingViewAccumulatedText(textAreaMessages);
+        this.viewModel.init();
     }
 }

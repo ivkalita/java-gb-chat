@@ -1,13 +1,14 @@
 package com.kalita_ivan.chat.server.gui;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+
 import com.kalita_ivan.chat.library.DefaultGUIWindow;
 import com.kalita_ivan.chat.library.TextAreaTimeLogger;
 import com.kalita_ivan.chat.server.core.ChatServer;
 import com.kalita_ivan.chat.server.core.ChatServerListener;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
 
 public class ChatServerGUI extends DefaultGUIWindow implements ChatServerListener {
 
@@ -66,11 +67,11 @@ public class ChatServerGUI extends DefaultGUIWindow implements ChatServerListene
     }
 
     private void initLogger() {
-        textAreaTimeLogger = new TextAreaTimeLogger(textAreaLog, "yyyy-MM-dd HH:mm:ss.SSS");
+        textAreaTimeLogger = new TextAreaTimeLogger(textAreaLog, "HH:mm:ss");
     }
 
     private void onStartListeningClick(ActionEvent e) {
-        chatServer.startListening(8189);
+        chatServer.startListening(8001);
     }
 
     private void onStopListeningClick(ActionEvent e) {

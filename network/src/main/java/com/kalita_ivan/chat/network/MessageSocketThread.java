@@ -6,7 +6,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 
 import com.kalita_ivan.chat.network.protocol.JSONStreamParser;
-import com.kalita_ivan.chat.network.protocol.Message;
+import com.kalita_ivan.chat.network.protocol.messages.Message;
 
 
 public class MessageSocketThread extends SocketThread {

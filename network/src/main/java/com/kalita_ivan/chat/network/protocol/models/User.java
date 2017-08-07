@@ -1,7 +1,8 @@
-package com.kalita_ivan.chat.network.protocol;
+package com.kalita_ivan.chat.network.protocol.models;
 
 import com.owlike.genson.annotation.JsonIgnore;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class User {
@@ -31,6 +32,22 @@ public class User {
         }
         HashMap<String, Object> map = (HashMap)object;
         return new User((Long)map.get("id"), (String)map.get("name"));
+    }
+
+    public static ArrayList<User> fromArrayList(Object object) {
+        if (object == null) {
+            return null;
+        }
+        if (!(object instanceof ArrayList)) {
+            return null;
+        }
+        ArrayList<Object> list = (ArrayList)object;
+        ArrayList<User> deserialized = new ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            deserialized.add(User.fromHashMap(list.get(i)));
+        }
+
+        return deserialized;
     }
 
     public String getName() {

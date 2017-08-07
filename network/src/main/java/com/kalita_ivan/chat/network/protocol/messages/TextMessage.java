@@ -1,4 +1,7 @@
-package com.kalita_ivan.chat.network.protocol;
+package com.kalita_ivan.chat.network.protocol.messages;
+
+import com.kalita_ivan.chat.network.protocol.RawMessage;
+import com.kalita_ivan.chat.network.protocol.models.User;
 
 public class TextMessage extends Message {
     private String text;

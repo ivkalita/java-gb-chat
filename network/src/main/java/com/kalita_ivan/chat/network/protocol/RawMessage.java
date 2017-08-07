@@ -4,7 +4,7 @@ import java.util.HashMap;
 
 public class RawMessage {
     public enum Type {
-        TEXT_MESSAGE, AUTH, SYSTEM
+        TEXT_MESSAGE, AUTH, SYSTEM, USER_LIST
     }
 
     public Type type;
@@ -14,11 +14,11 @@ public class RawMessage {
         this.data = new HashMap<>();
     }
 
-    String getData(String key) {
+    public String getData(String key) {
         return String.class.cast(this.data.get(key));
     }
 
-    void putData(String key, Object value) {
+    public void putData(String key, Object value) {
         this.data.put(key, value);
     }
 }

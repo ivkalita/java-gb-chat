@@ -4,10 +4,13 @@ import java.io.UnsupportedEncodingException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 
 import com.kalita_ivan.chat.network.MessageSocketThread;
 import com.kalita_ivan.chat.network.ServerSocketThread;
-import com.kalita_ivan.chat.network.protocol.*;
+import com.kalita_ivan.chat.network.protocol.messages.*;
+import com.kalita_ivan.chat.network.protocol.models.User;
 
 
 public class ChatServer {
@@ -75,6 +78,7 @@ public class ChatServer {
             this.clients.remove(thread);
             if (thread.isAuthenticated()) {
                 this.broadcast(new SystemMessage(String.format("User %s left the chat.", thread.getUser().getName())));
+                this.userListChanged();
             }
         }
         log(String.format("ChatSocketThread (%s) stopped.", thread.getName()));
@@ -124,6 +128,19 @@ public class ChatServer {
         thread.authenticate(user);
         log(String.format("ChatSocketThread (%s) authenticated as %s", thread.getName(), user.getName()));
         this.broadcast(new SystemMessage(String.format("%s joined the chat.", user.getName())));
+        this.userListChanged();
+    }
+
+    private void userListChanged() {
+        HashMap<Long, User> users = new HashMap<>();
+        for (int i = 0; i < this.clients.size(); i++) {
+            if (!this.clients.get(i).isAuthenticated()) {
+                continue;
+            }
+            User user = this.clients.get(i).getUser();
+            users.put(user.getId(), user);
+        }
+        this.broadcast(new UserListMessage(new ArrayList<>(users.values())));
     }
 
     private void onChatSocketThreadMessageRejected(ChatSocketThread thread, byte[] rejected) {

@@ -1,20 +1,20 @@
 package com.kalita_ivan.chat.client;
 
 import com.kalita_ivan.chat.network.MessageSocketThread;
-import com.kalita_ivan.chat.network.protocol.AuthMessage;
-import com.kalita_ivan.chat.network.protocol.Message;
-import com.kalita_ivan.chat.network.protocol.SystemMessage;
-import com.kalita_ivan.chat.network.protocol.TextMessage;
+import com.kalita_ivan.chat.network.protocol.messages.*;
+import com.kalita_ivan.chat.network.protocol.models.User;
 import rx.subjects.PublishSubject;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.ArrayList;
 
 class Messenger {
     PublishSubject<Void> connected;
     PublishSubject<Void> disconnected;
     PublishSubject<Throwable> failed;
     PublishSubject<String> newMessage;
+    PublishSubject<ArrayList<User>> userListUpdated;
 
     private MessageSocketThread socketThread;
     private String login;
@@ -25,6 +25,7 @@ class Messenger {
         this.connected = PublishSubject.create();
         this.disconnected = PublishSubject.create();
         this.failed = PublishSubject.create();
+        this.userListUpdated = PublishSubject.create();
     }
 
     void connect(String ip, String port, String login, String password) {
@@ -61,6 +62,8 @@ class Messenger {
             this.onTextMessageReceived((TextMessage)message);
         } else if (message instanceof SystemMessage) {
             this.onSystemMessageReceived((SystemMessage)message);
+        } else if (message instanceof UserListMessage) {
+            this.onUserListMessageReceived((UserListMessage)message);
         }
     }
 
@@ -70,6 +73,10 @@ class Messenger {
 
     private void onSystemMessageReceived(SystemMessage message) {
         this.newMessage.onNext(String.format("System: %s", message.getText()));
+    }
+
+    private void onUserListMessageReceived(UserListMessage message) {
+        this.userListUpdated.onNext(message.getUsers());
     }
 
     void send(String text) {

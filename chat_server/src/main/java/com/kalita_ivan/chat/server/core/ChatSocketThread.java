@@ -3,7 +3,7 @@ package com.kalita_ivan.chat.server.core;
 import java.net.Socket;
 
 import com.kalita_ivan.chat.network.MessageSocketThread;
-import com.kalita_ivan.chat.network.protocol.User;
+import com.kalita_ivan.chat.network.protocol.models.User;
 
 class ChatSocketThread extends MessageSocketThread {
     private User user;

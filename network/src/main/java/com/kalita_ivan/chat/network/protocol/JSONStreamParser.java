@@ -1,5 +1,6 @@
 package com.kalita_ivan.chat.network.protocol;
 
+import com.kalita_ivan.chat.network.protocol.messages.Message;
 import com.owlike.genson.Genson;
 import rx.Observable;
 import rx.subjects.PublishSubject;

@@ -27,7 +27,7 @@ class ChatClientView extends JFrame  {
     private JButton buttonDisconnect;
     private JButton buttonSend;
     private JTextArea textAreaMessages;
-    private JList<String> listUsers;
+    private JTextArea listUsers;
 
     ChatClientView() {
         this.buildView();
@@ -47,7 +47,8 @@ class ChatClientView extends JFrame  {
         buttonLogin = new JButton("Login");
 
         textAreaMessages = new JTextArea();
-        listUsers = new JList<>();
+        listUsers = new JTextArea();
+        listUsers.setEditable(false);
 
         panelBottom = new JPanel(new BorderLayout());
         buttonDisconnect = new JButton("Disconnect");
@@ -103,6 +104,7 @@ class ChatClientView extends JFrame  {
         bindViewModelBoolean(viewModel.panelBottomVisible).toSwingViewVisiblePropertyOf(panelBottom);
         bindViewModelBoolean(viewModel.alwaysOnTop).toSwingViewAlwaysOnTopPropertyOf(this);
         bindViewModelString(viewModel.messages).toSwingViewAccumulatedText(textAreaMessages);
+        bindViewModelString(viewModel.userList).toSwingViewText(listUsers);
         this.viewModel.init();
     }
 }

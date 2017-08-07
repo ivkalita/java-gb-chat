@@ -3,8 +3,10 @@ package com.kalita_ivan.chat.client;
 import java.awt.event.ActionEvent;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
+import com.kalita_ivan.chat.network.protocol.models.User;
 import rx.subjects.BehaviorSubject;
 import rx.subjects.PublishSubject;
 
@@ -26,6 +28,7 @@ class ChatClientViewModel {
     BehaviorSubject<ActionEvent> buttonDisconnect = BehaviorSubject.create();
     BehaviorSubject<ActionEvent> buttonSend = BehaviorSubject.create();
     PublishSubject<String> messages = PublishSubject.create();
+    PublishSubject<String> userList = PublishSubject.create();
 
     private boolean connected;
     private Messenger messenger;
@@ -69,10 +72,19 @@ class ChatClientViewModel {
             this.connected = false;
             this.panelTopVisible.onNext(true);
             this.panelBottomVisible.onNext(false);
+            this.userList.onNext("");
             log("ChatClient: disconnected.");
         });
 
         this.messenger.newMessage.subscribe(this::log);
+        this.messenger.userListUpdated.subscribe((users) -> {
+            StringBuilder builder = new StringBuilder();
+            for (User user: users) {
+                builder.append(user.getName());
+                builder.append("\n");
+            }
+            this.userList.onNext(builder.toString());
+        });
 
         this.messenger.failed.subscribe((e) -> log(String.format("Messenger: exception: %s", e.getMessage())));
     }

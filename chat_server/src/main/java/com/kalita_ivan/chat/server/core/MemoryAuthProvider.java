@@ -1,6 +1,6 @@
 package com.kalita_ivan.chat.server.core;
 
-import com.kalita_ivan.chat.network.protocol.User;
+import com.kalita_ivan.chat.network.protocol.models.User;
 
 import java.util.ArrayList;
 

@@ -4,23 +4,24 @@ import java.io.UnsupportedEncodingException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import com.kalita_ivan.chat.network.MessageSocketThread;
 import com.kalita_ivan.chat.network.ServerSocketThread;
-import com.kalita_ivan.chat.network.protocol.Message;
+import com.kalita_ivan.chat.network.protocol.*;
 
 
 public class ChatServer {
 
     private ChatServerListener listener;
     private ServerSocketThread thread;
-    private ArrayList<MessageSocketThread> clients;
+    private ArrayList<ChatSocketThread> clients;
     private Boolean clientsBlocked = false;
+    private AuthProvider authProvider;
 
     public ChatServer(ChatServerListener listener) {
         this.listener = listener;
         this.clients = new ArrayList<>();
+        this.authProvider = new MemoryAuthProvider();
     }
 
     public void startListening(int port) {
@@ -54,58 +55,86 @@ public class ChatServer {
     private void onServerSocketThreadAccepted(Socket socket) {
         String threadName = String.format("%s:%d", socket.getInetAddress(), socket.getPort());
         log(String.format("ServerSocketThread: accepted %s", threadName));
-        MessageSocketThread thread = new MessageSocketThread(threadName, socket);
-        thread.started.subscribe((none) -> this.onMessageSocketThreadStarted(thread));
-        thread.stopped.subscribe((none) -> this.onMessageSocketThreadStopped(thread));
-        thread.ready.subscribe((none) -> this.onMessageSocketThreadReady(thread));
-        thread.failed.subscribe((throwable) -> this.onMessageSocketThreadFailed(thread, throwable));
-        thread.messageReceived.subscribe((message) -> this.onMessageSocketThreadMessageReceived(thread, message));
-        thread.messageRejected.subscribe((rejected) -> this.onMessageSocketThreadMessageRejected(thread, rejected));
+        ChatSocketThread thread = new ChatSocketThread(threadName, socket);
+        thread.started.subscribe((none) -> this.onChatSocketThreadStarted(thread));
+        thread.stopped.subscribe((none) -> this.onChatSocketThreadStopped(thread));
+        thread.ready.subscribe((none) -> this.onChatSocketThreadReady(thread));
+        thread.failed.subscribe((throwable) -> this.onChatSocketThreadFailed(thread, throwable));
+        thread.messageReceived.subscribe((message) -> this.onChatSocketThreadMessageReceived(thread, message));
+        thread.messageRejected.subscribe((rejected) -> this.onChatSocketThreadMessageRejected(thread, rejected));
         this.clients.add(thread);
         thread.start();
     }
 
-    private void onMessageSocketThreadStarted(MessageSocketThread thread) {
-        log(String.format("MessageSocketThread (%s): started.", thread.getName()));
+    private void onChatSocketThreadStarted(ChatSocketThread thread) {
+        log(String.format("ChatSocketThread (%s) started.", thread.getName()));
     }
 
-    private void onMessageSocketThreadStopped(MessageSocketThread thread) {
+    private void onChatSocketThreadStopped(ChatSocketThread thread) {
         if (!this.clientsBlocked) {
             this.clients.remove(thread);
+            if (thread.isAuthenticated()) {
+                this.broadcast(new SystemMessage(String.format("User %s left the chat.", thread.getUser().getName())));
+            }
         }
-        log(String.format("MessageSocketThread (%s): stopped.", thread.getName()));
+        log(String.format("ChatSocketThread (%s) stopped.", thread.getName()));
     }
 
-    private void onMessageSocketThreadReady(MessageSocketThread thread) {
-        log(String.format("MessageSocketThread (%s): ready.", thread.getName()));
+    private void onChatSocketThreadReady(ChatSocketThread thread) {
+        log(String.format("ChatSocketThread (%s) ready.", thread.getName()));
     }
 
-    private void onMessageSocketThreadFailed(MessageSocketThread thread, Throwable error) {
-        log(String.format("MessageSocketThread (%s): exception: %s.", thread.getName(), error.getMessage()));
+    private void onChatSocketThreadFailed(ChatSocketThread thread, Throwable error) {
+        log(String.format("ChatSocketThread (%s) exception: %s.", thread.getName(), error.getMessage()));
     }
 
-    private void onMessageSocketThreadMessageReceived(MessageSocketThread thread, Message message) {
-        switch (message.type) {
-            case TEXT_MESSAGE:
-                log(String.format(
-                    "MessageSocketThread (%s): sent message: %s.",
-                    thread.getName(), message.data.get("text")
-                ));
-                this.broadcast(message);
-                break;
-            default:
+    private void onChatSocketThreadMessageReceived(ChatSocketThread thread, Message message) {
+        if (message instanceof TextMessage) {
+            this.onChatSocketThreadTextMessageReceived(thread, (TextMessage)message);
+        } else if (message instanceof AuthMessage) {
+            this.onChatSocketThreadAuthMessageReceived(thread, (AuthMessage)message);
         }
     }
 
-    private void onMessageSocketThreadMessageRejected(MessageSocketThread thread, byte[] rejected) {
+    private void onChatSocketThreadTextMessageReceived(ChatSocketThread thread, TextMessage message) {
+        log(String.format(
+            "ChatSocketThread (%s) sent message: %s.",
+            thread.getName(), message.getText()
+        ));
+        if (!thread.isAuthenticated()) {
+            log(String.format("ChatSocketThread (%s) is not authenticated.", thread.getName()));
+            thread.send(new SystemMessage("You are not authenticated."));
+            return;
+        }
+        message.setSender(thread.getUser());
+        this.broadcast(message);
+    }
+
+    private void onChatSocketThreadAuthMessageReceived(ChatSocketThread thread, AuthMessage message) {
+        log(String.format(
+            "ChatSocketThread (%s) auth message: (%s, %s).",
+            thread.getName(), message.getLogin(), message.getPassword()
+        ));
+        User user = this.authProvider.authenticate(message.getLogin(), message.getPassword());
+        if (user == null) {
+            log(String.format("ChatSocketThread (%s) auth failed.", thread.getName()));
+            thread.send(new SystemMessage("Invalid credentials"));
+            return;
+        }
+        thread.authenticate(user);
+        log(String.format("ChatSocketThread (%s) authenticated as %s", thread.getName(), user.getName()));
+        this.broadcast(new SystemMessage(String.format("%s joined the chat.", user.getName())));
+    }
+
+    private void onChatSocketThreadMessageRejected(ChatSocketThread thread, byte[] rejected) {
         try {
             log(String.format(
-                "MessageSocketThread (%s): message rejected: %s.",
+                "ChatSocketThread (%s) message rejected: %s.",
                 thread.getName(), new String(rejected, "UTF-8")
             ));
         } catch (UnsupportedEncodingException e) {
             log(String.format(
-                "MessageSocketThread (%s): unable to format message – unsupported encoding.",
+                "ChatSocketThread (%s) unable to format message – unsupported encoding.",
                 thread.getName()
             ));
         }
@@ -135,7 +164,10 @@ public class ChatServer {
     }
 
     private void broadcast(Message message) {
-        for (MessageSocketThread client: this.clients) {
+        for (ChatSocketThread client: this.clients) {
+            if (!client.isAuthenticated()) {
+                continue;
+            }
             client.send(message);
         }
     }

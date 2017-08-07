@@ -1,26 +1,11 @@
 package com.kalita_ivan.chat.network.protocol;
 
-import java.util.HashMap;
+abstract public class Message {
+    abstract public RawMessage wrap();
 
-public class Message {
-    public enum Type {
-        TEXT_MESSAGE(1);
-
-        private final int id;
-
-        Type(int id) {
-            this.id = id;
-        }
-
-        public int getValue() {
-            return this.id;
-        }
+    public Message(RawMessage rawMessage) {
     }
 
-    public Type type;
-    public HashMap<String, Object> data;
-
     public Message() {
-        this.data = new HashMap<>();
     }
 }

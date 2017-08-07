@@ -12,10 +12,12 @@ public class JSONStreamParser {
     public PublishSubject<Message> messageReceived;
     public PublishSubject<byte[]> messageRejected;
     private Genson genson;
+    private MessageFactory messageFactory;
 
     public JSONStreamParser(Observable<Byte> onByteReceived) {
         this.messageReceived = PublishSubject.create();
         this.messageRejected = PublishSubject.create();
+        this.messageFactory = new MessageFactory();
         onByteReceived.subscribe(this::processByte);
         this.genson = new Genson();
         buffer = new byte[MAX_MESSAGE_SIZE];
@@ -61,11 +63,12 @@ public class JSONStreamParser {
     }
 
     private void deserialize() {
-        Message message = genson.deserialize(this.buffer, Message.class);
+        RawMessage rawMessage = genson.deserialize(this.buffer, RawMessage.class);
+        Message message = this.messageFactory.createFromRaw(rawMessage);
         this.messageReceived.onNext(message);
     }
 
     public String serialize(Message message) {
-        return this.genson.serialize(message);
+        return this.genson.serialize(message.wrap());
     }
 }

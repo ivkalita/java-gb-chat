@@ -1,7 +1,9 @@
 package com.kalita_ivan.chat.client;
 
 import com.kalita_ivan.chat.network.MessageSocketThread;
+import com.kalita_ivan.chat.network.protocol.AuthMessage;
 import com.kalita_ivan.chat.network.protocol.Message;
+import com.kalita_ivan.chat.network.protocol.SystemMessage;
 import com.kalita_ivan.chat.network.protocol.TextMessage;
 import rx.subjects.PublishSubject;
 
@@ -14,8 +16,9 @@ class Messenger {
     PublishSubject<Throwable> failed;
     PublishSubject<String> newMessage;
 
-    private static int clientIdGenerator = 0;
     private MessageSocketThread socketThread;
+    private String login;
+    private String password;
 
     Messenger() {
         this.newMessage = PublishSubject.create();
@@ -25,12 +28,15 @@ class Messenger {
     }
 
     void connect(String ip, String port, String login, String password) {
+        this.login = login;
+        this.password = password;
         if (this.socketThread != null) {
             return;
         }
         try {
             Socket socket = new Socket(ip, Integer.parseInt(port));
             this.socketThread = new MessageSocketThread("SocketThread", socket);
+            this.socketThread.ready.subscribe(this::authenticate);
             this.socketThread.stopped.first().subscribe((none) -> {
                 this.socketThread = null;
                 this.disconnected.onNext(null);
@@ -51,14 +57,26 @@ class Messenger {
     }
 
     private void onMessageReceived(Message message) {
-        switch(message.type) {
-            case TEXT_MESSAGE:
-                this.newMessage.onNext(String.class.cast(message.data.get("text")));
-                break;
+        if (message instanceof TextMessage) {
+            this.onTextMessageReceived((TextMessage)message);
+        } else if (message instanceof SystemMessage) {
+            this.onSystemMessageReceived((SystemMessage)message);
         }
     }
 
+    private void onTextMessageReceived(TextMessage message) {
+        this.newMessage.onNext(String.format("%s: %s", message.getSender().getName(), message.getText()));
+    }
+
+    private void onSystemMessageReceived(SystemMessage message) {
+        this.newMessage.onNext(String.format("System: %s", message.getText()));
+    }
+
     void send(String text) {
-        this.socketThread.send(new TextMessage(text));
+        this.socketThread.send(new TextMessage(text, null));
+    }
+
+    private void authenticate(Socket socket) {
+        this.socketThread.send(new AuthMessage(this.login, this.password));
     }
 }
